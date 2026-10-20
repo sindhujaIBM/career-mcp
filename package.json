@@ -1,0 +1,57 @@
+{
+  "name": "@sindhujaks/career-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for resume/JD match analysis, tailored resumes and cover letters, a structured career-story interview, and LinkedIn About drafting. Local-first — your data never leaves your machine.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "career-mcp": "dist/index.js",
+    "career-mcp-cli": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    ".env.example",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "cli": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "resume",
+    "career",
+    "job-search",
+    "claude",
+    "ai-agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sindhujaIBM/career-mcp.git"
+  },
+  "homepage": "https://github.com/sindhujaIBM/career-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/sindhujaIBM/career-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  },
+  "license": "MIT"
+}
