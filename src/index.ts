@@ -145,7 +145,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "get_resume": {
         const resume = await storage.getResume();
-        return textResult(resume ? resume.rawText : "No resume stored yet. Use save_resume first.");
+        return textResult(resume?.rawText ? resume.rawText : "No resume stored yet. Use save_resume first.");
       }
 
       case "save_voice_profile": {
@@ -190,7 +190,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           application.jdText,
           "",
           "### Resume",
-          resume ? resume.rawText : "(none stored)",
+          resume?.rawText ? resume.rawText : "(none stored)",
           "",
           "### Voice profile",
           voice ?? "(none stored — write in a clear, direct, honest tone; avoid buzzwords and AI-sounding phrases)",
