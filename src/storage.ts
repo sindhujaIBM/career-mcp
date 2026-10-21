@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile, readdir, access } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { PDFParse } from "pdf-parse";
 
 const DATA_DIR = process.env.CAREER_MCP_DATA_DIR || path.join(os.homedir(), ".career-mcp");
 const STORIES_DIR = path.join(DATA_DIR, "stories");
@@ -59,9 +60,20 @@ export async function readTextFile(filePath: string): Promise<string> {
   const expanded = filePath.startsWith("~") ? path.join(os.homedir(), filePath.slice(1)) : filePath;
   const resolved = path.resolve(expanded);
   if (resolved.toLowerCase().endsWith(".pdf")) {
-    throw new Error(`Cannot read PDF files directly (${resolved}). Export it to .txt or .md first.`);
+    return readPdfText(resolved);
   }
   return readFile(resolved, "utf8");
+}
+
+async function readPdfText(resolvedPath: string): Promise<string> {
+  const buffer = await readFile(resolvedPath);
+  const parser = new PDFParse({ data: buffer });
+  try {
+    const result = await parser.getText();
+    return result.text;
+  } finally {
+    await parser.destroy();
+  }
 }
 
 export async function saveResume(rawText: string): Promise<Resume> {

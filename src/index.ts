@@ -22,7 +22,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: "object",
         properties: {
           resume_text: { type: "string", description: "The full resume content" },
-          resume_path: { type: "string", description: "Absolute path to a .txt or .md resume file to read instead of passing raw text" },
+          resume_path: { type: "string", description: "Absolute path to a .pdf, .txt, or .md resume file to read instead of passing raw text" },
         },
       },
     },
@@ -56,7 +56,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           company: { type: "string" },
           role: { type: "string" },
           jd_text: { type: "string", description: "The full job description text" },
-          jd_path: { type: "string", description: "Absolute path to a .txt or .md job description file to read instead of passing raw text" },
+          jd_path: { type: "string", description: "Absolute path to a .pdf, .txt, or .md job description file to read instead of passing raw text" },
         },
         required: ["company", "role"],
       },
