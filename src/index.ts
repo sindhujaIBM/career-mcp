@@ -17,13 +17,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "save_resume",
-      description: "Store the user's base resume as raw text. Overwrites any previously stored resume.",
+      description: "Store the user's base resume, either as raw text or by reading a local file. Overwrites any previously stored resume. Provide exactly one of resume_text or resume_path.",
       inputSchema: {
         type: "object",
         properties: {
           resume_text: { type: "string", description: "The full resume content" },
+          resume_path: { type: "string", description: "Absolute path to a .txt or .md resume file to read instead of passing raw text" },
         },
-        required: ["resume_text"],
       },
     },
     {
@@ -49,15 +49,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "save_jd",
-      description: "Store a job description for a company/role and mark it as the active application. Creates a new application record.",
+      description: "Store a job description for a company/role and mark it as the active application. Creates a new application record. Provide exactly one of jd_text or jd_path.",
       inputSchema: {
         type: "object",
         properties: {
           company: { type: "string" },
           role: { type: "string" },
           jd_text: { type: "string", description: "The full job description text" },
+          jd_path: { type: "string", description: "Absolute path to a .txt or .md job description file to read instead of passing raw text" },
         },
-        required: ["company", "role", "jd_text"],
+        required: ["company", "role"],
       },
     },
     {
@@ -135,8 +136,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case "save_resume": {
-        const { resume_text } = args as { resume_text: string };
-        await storage.saveResume(resume_text);
+        const { resume_text, resume_path } = args as { resume_text?: string; resume_path?: string };
+        const text = resume_text ?? (resume_path ? await storage.readTextFile(resume_path) : undefined);
+        if (!text) throw new Error("Provide either resume_text or resume_path.");
+        await storage.saveResume(text);
         return textResult("Resume saved.");
       }
 
@@ -157,8 +160,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "save_jd": {
-        const { company, role, jd_text } = args as { company: string; role: string; jd_text: string };
-        const application = await storage.saveJD(company, role, jd_text);
+        const { company, role, jd_text, jd_path } = args as {
+          company: string;
+          role: string;
+          jd_text?: string;
+          jd_path?: string;
+        };
+        const text = jd_text ?? (jd_path ? await storage.readTextFile(jd_path) : undefined);
+        if (!text) throw new Error("Provide either jd_text or jd_path.");
+        const application = await storage.saveJD(company, role, text);
         return textResult(`Saved job description for ${company} — ${role}. Set as the active application (slug: ${application.slug}).`);
       }
 

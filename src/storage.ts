@@ -55,6 +55,15 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+export async function readTextFile(filePath: string): Promise<string> {
+  const expanded = filePath.startsWith("~") ? path.join(os.homedir(), filePath.slice(1)) : filePath;
+  const resolved = path.resolve(expanded);
+  if (resolved.toLowerCase().endsWith(".pdf")) {
+    throw new Error(`Cannot read PDF files directly (${resolved}). Export it to .txt or .md first.`);
+  }
+  return readFile(resolved, "utf8");
+}
+
 export async function saveResume(rawText: string): Promise<Resume> {
   await ensureDirs();
   const resume: Resume = { rawText, updatedAt: new Date().toISOString() };

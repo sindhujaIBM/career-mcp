@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
 import * as readline from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import "dotenv/config";
@@ -15,7 +14,7 @@ const SYSTEM_PROMPT =
 
 async function readArgFile(flagValue: string | undefined): Promise<string | undefined> {
   if (!flagValue) return undefined;
-  return readFile(flagValue, "utf8");
+  return storage.readTextFile(flagValue);
 }
 
 function parseFlags(argv: string[]): Record<string, string> {
