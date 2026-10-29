@@ -5,6 +5,8 @@ import "dotenv/config";
 import * as storage from "./storage.js";
 import { startStoryInterview, answerStoryQuestion } from "./interview.js";
 import { callLLM } from "./llm-fallback.js";
+import { exportPdf, describeResult, type ExportDocument } from "./export.js";
+import { RESUME_MARKDOWN_GUIDE } from "./render/markdown.js";
 
 const SYSTEM_PROMPT =
   "You are a career writing assistant. Write in a clear, direct, honest voice — " +
@@ -79,6 +81,16 @@ async function cmdGenerate(outputType: storage.OutputType, instruction: string) 
   console.log(`\n(saved to ~/.career-mcp/applications/${ctx.application.slug}/outputs/${outputType}.md)`);
 }
 
+async function cmdPdf(flags: Record<string, string>, document?: ExportDocument) {
+  const result = await exportPdf({
+    document: document ?? (flags.document as ExportDocument | undefined),
+    applicationSlug: flags.application,
+    theme: flags.theme,
+    pageSize: flags["page-size"],
+  });
+  console.log(describeResult(result));
+}
+
 async function cmdInterview() {
   const rl = readline.createInterface({ input: stdin, output: stdout });
   let step = startStoryInterview();
@@ -106,9 +118,14 @@ async function main() {
     case "analyze":
       return cmdGenerate("match_analysis", "Analyze how well this resume matches this job description. Call out genuine overlaps and honest gaps — no keyword stuffing.");
     case "resume":
-      return cmdGenerate("tailored_resume", "Produce a tailored version of this resume for this job description, reordering and reframing existing content for relevance. Do not invent experience.");
+      await cmdGenerate("tailored_resume", `Produce a tailored version of this resume for this job description, reordering and reframing existing content for relevance. Do not invent experience.\n\n${RESUME_MARKDOWN_GUIDE}`);
+      return cmdPdf(flags, "tailored_resume");
     case "cover-letter":
-      return cmdGenerate("cover_letter", "Write a cover letter for this job description, in the voice profile's tone. A real letter: date, Dear Hiring Team, body, Sincerely + name.");
+      await cmdGenerate("cover_letter", "Write a cover letter for this job description, in the voice profile's tone. A real letter: date, Dear Hiring Team, body, Sincerely + name. Output only the letter, as markdown.");
+      if (flags.pdf) return cmdPdf(flags, "cover_letter");
+      return;
+    case "pdf":
+      return cmdPdf(flags);
     case "about":
       return cmdGenerate("linkedin_about", "Write a LinkedIn About section based on this resume and these stories, in the voice profile's tone.");
     default:
@@ -122,9 +139,13 @@ async function main() {
           "  set-jd --company <name> --role <title> --file <path>",
           "  interview",
           "  analyze",
-          "  resume",
-          "  cover-letter",
+          "  resume                 (also writes a PDF)",
+          "  cover-letter [--pdf]",
           "  about",
+          "  pdf [--document tailored_resume|cover_letter|base_resume] [--theme navy|minimal|classic]",
+          "      [--page-size letter|a4] [--application <slug>]",
+          "",
+          "  resume and cover-letter --pdf also accept --theme and --page-size.",
         ].join("\n")
       );
   }

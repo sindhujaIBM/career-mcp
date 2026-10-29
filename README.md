@@ -1,6 +1,6 @@
 # career-mcp
 
-An MCP server for the job-search loop: store a resume, drop in a job description, get a real match analysis, a tailored resume, a cover letter, a LinkedIn About section — plus a structured interview that captures your career stories so they're ready to reuse.
+An MCP server for the job-search loop: store a resume, drop in a job description, get a real match analysis, a tailored resume and cover letter (exported to PDF), a LinkedIn About section — plus a structured interview that captures your career stories so they're ready to reuse.
 
 Local-first. Your resume and stories live in a folder on your machine (`~/.career-mcp` by default) — nothing is uploaded anywhere.
 
@@ -42,8 +42,37 @@ Then, in conversation: save your resume, save a JD, and ask your client to run a
 | `get_active_application` | Bundles resume + JD + voice profile + relevant stories as context |
 | `list_applications` | List all stored applications |
 | `save_output` | Persist a generated match analysis / resume / cover letter / About section |
+| `export_pdf` | Render a tailored resume, cover letter, or base resume to PDF (themes: `navy`, `minimal`, `classic`; page size: `letter` or `a4`) |
 | `save_story` / `query_stories` | Save/retrieve career stories, filterable by tag |
 | `start_story_interview` / `answer_story_question` | Guided, protocol-driven interview to capture one new story |
+
+## PDF export
+
+`export_pdf` turns a saved markdown resume or cover letter into a PDF that ATS systems can read (real, selectable text — not an image).
+
+- **Uses the browser you already have.** It drives your installed Chrome, Edge, Chromium, or Brave in the background — nothing extra is downloaded. If yours lives somewhere unusual, set `CAREER_MCP_CHROME_PATH`. If no browser is found, you get an `.html` file instead: open it and use Print → Save as PDF.
+- **Works offline.** Fonts are bundled with the package.
+- **Three themes:** `navy` (default — modern sans-serif, navy accents), `minimal` (monochrome, compact), `classic` (serif, centered header).
+- **Letter or A4.** Defaults to Letter; set `CAREER_MCP_PAGE_SIZE=a4` to change the default.
+- **Cover letters only on request** — the default document is the tailored resume.
+
+The PDF is written next to the markdown (e.g. `outputs/tailored_resume.pdf`). The markdown stays the source of truth: edit it, then export again.
+
+Resumes render best in this shape (the MCP client is told this automatically):
+
+```markdown
+# Full Name
+Target title · positioning
+City · email · phone · linkedin.com/in/you
+
+## Summary
+...
+
+## Experience
+### Job Title — Company
+*2021 – Present | City*
+- Achievement bullet
+```
 
 ## Use standalone (no MCP client)
 
@@ -53,8 +82,9 @@ cp .env.example .env   # fill in CAREER_MCP_API_KEY (free Groq or Gemini key)
 career-mcp-cli set-resume --file resume.txt
 career-mcp-cli set-jd --company Acme --role "Senior Engineer" --file jd.txt
 career-mcp-cli analyze
-career-mcp-cli resume
-career-mcp-cli cover-letter
+career-mcp-cli resume                         # also writes the PDF
+career-mcp-cli cover-letter --pdf             # --pdf is optional
+career-mcp-cli pdf --theme classic --page-size a4
 career-mcp-cli about
 career-mcp-cli interview   # guided story capture
 ```
@@ -69,6 +99,7 @@ career-mcp-cli interview   # guided story capture
 └── applications/<company-role>/
     ├── jd.json
     └── outputs/{match_analysis,tailored_resume,cover_letter,linkedin_about}.md
+        (+ tailored_resume.pdf / cover_letter.pdf once exported)
 ```
 
 Override the location with `CAREER_MCP_DATA_DIR`.
