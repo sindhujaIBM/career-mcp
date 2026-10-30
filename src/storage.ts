@@ -174,6 +174,15 @@ export async function saveOutput(slug: string, type: OutputType, content: string
   return filePath;
 }
 
+// Path without extension, so renderers can write <base>.pdf / <base>.html next to <base>.md.
+export function outputBasePath(slug: string, type: OutputType): string {
+  return path.join(APPLICATIONS_DIR, slug, "outputs", type);
+}
+
+export function baseResumeOutputBasePath(): string {
+  return path.join(DATA_DIR, "resume");
+}
+
 export async function getOutput(slug: string, type: OutputType): Promise<string | null> {
   const filePath = path.join(APPLICATIONS_DIR, slug, "outputs", `${type}.md`);
   if (!(await exists(filePath))) return null;

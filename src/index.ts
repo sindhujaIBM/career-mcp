@@ -7,6 +7,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as storage from "./storage.js";
 import { startStoryInterview, answerStoryQuestion } from "./interview.js";
+import { exportPdf, describeResult, EXPORT_DOCUMENTS, type ExportDocument } from "./export.js";
+import { RESUME_MARKDOWN_GUIDE, PAGE_SIZES } from "./render/markdown.js";
+import { THEME_NAMES } from "./render/themes.js";
 
 const server = new Server(
   { name: "career-mcp", version: "1.0.0" },
@@ -63,7 +66,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "get_active_application",
-      description: "Returns the stored resume, voice profile, and the active job description together, as context for match analysis or content generation. Use this to: (1) run match analysis — identify genuine overlaps and honest gaps between the resume and JD, not keyword stuffing; (2) draft a tailored resume by reordering/reframing existing resume content for relevance, never fabricating experience; (3) draft a cover letter; (4) draft a LinkedIn About section. Match the voice profile's tone if one is set. Save any generated output with save_output.",
+      description: `Returns the stored resume, voice profile, and the active job description together, as context for match analysis or content generation. Use this to: (1) run match analysis — identify genuine overlaps and honest gaps between the resume and JD, not keyword stuffing; (2) draft a tailored resume by reordering/reframing existing resume content for relevance, never fabricating experience; (3) draft a cover letter; (4) draft a LinkedIn About section. Match the voice profile's tone if one is set. Save any generated output with save_output.\n\n${RESUME_MARKDOWN_GUIDE}`,
       inputSchema: { type: "object", properties: {} },
     },
     {
@@ -73,7 +76,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "save_output",
-      description: "Persist generated content (match analysis, tailored resume, cover letter, or LinkedIn About draft) for an application. Defaults to the active application if application_slug is omitted.",
+      description: "Persist generated content (match analysis, tailored resume, cover letter, or LinkedIn About draft) for an application. Defaults to the active application if application_slug is omitted. After saving a tailored resume, offer to export it with export_pdf.",
       inputSchema: {
         type: "object",
         properties: {
@@ -85,6 +88,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           application_slug: { type: "string", description: "Optional — defaults to the active application" },
         },
         required: ["output_type", "content"],
+      },
+    },
+    {
+      name: "export_pdf",
+      description: "Render a saved markdown document to a PDF that ATS systems can read, using the user's installed Chrome/Edge/Chromium/Brave. Defaults to the active application's tailored resume. Only export a cover letter when the user asks for one. If no browser is found, an HTML file is written instead and the reason is returned — relay it to the user.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          document: {
+            type: "string",
+            enum: EXPORT_DOCUMENTS,
+            description: "tailored_resume (default), cover_letter, or base_resume (the stored base resume)",
+          },
+          application_slug: { type: "string", description: "Optional — defaults to the active application. Ignored for base_resume." },
+          theme: { type: "string", enum: THEME_NAMES, description: "navy (default: modern sans, navy accents), minimal (monochrome, compact), classic (serif, centered header)" },
+          page_size: { type: "string", enum: PAGE_SIZES, description: "letter (default) or a4" },
+        },
       },
     },
     {
@@ -223,6 +243,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         const filePath = await storage.saveOutput(slug, output_type, content);
         return textResult(`Saved ${output_type} to ${filePath}`);
+      }
+
+      case "export_pdf": {
+        const { document, application_slug, theme, page_size } = args as {
+          document?: ExportDocument;
+          application_slug?: string;
+          theme?: string;
+          page_size?: string;
+        };
+        const result = await exportPdf({ document, applicationSlug: application_slug, theme, pageSize: page_size });
+        return result.ok ? textResult(describeResult(result)) : { ...textResult(describeResult(result)), isError: true };
       }
 
       case "save_story": {
