@@ -74,6 +74,10 @@ City · email · phone · linkedin.com/in/you
 - Achievement bullet
 ```
 
+## Agent skill
+
+[`skill/career-mcp/SKILL.md`](skill/career-mcp/SKILL.md) is an agent skill that tells Claude Code, Cursor, and other skill-aware agents when and how to use these tools: match analysis before tailoring, honest gaps, cover letters only on request, and a guided story interview. Copy the `skill/career-mcp` folder into your agent's skills directory (for Claude Code, `~/.claude/skills/`).
+
 ## Use standalone (no MCP client)
 
 ```bash
